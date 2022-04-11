@@ -4,7 +4,8 @@ import * as pactum from 'pactum';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { AppModule } from '../src/app.module';
 import { AuthDto } from '../src/auth/dto';
-import { EditUserDto } from 'src/user/dto';
+import { EditUserDto } from '../src/user/dto';
+import { CreateBookmarkDto, EditBookmarkDto } from '../src/bookmark/dto';
 
 describe ('App e2e', () => {
   let prisma: PrismaService;
@@ -50,7 +51,7 @@ describe ('App e2e', () => {
   });
 
   describe('User', () => {
-    describe('Get me', () => {
+    describe('Get current user', () => {
       pactum.spec().get('/users/me').withHeaders({Authorization: 'Bearer $S{userAT}',}).expectStatus(200);
     });
 
@@ -61,16 +62,49 @@ describe ('App e2e', () => {
         lastName: 'Doe',
       };
       it('should edit user', () => {
-        return pactum.spec().patch('/users').withHeaders({Authorization: 'Bearer $S{userAT}',}).withBody(dto).expectStatus(200).inspect();
+        return pactum.spec().patch('/users').withHeaders({Authorization: 'Bearer $S{userAT}',}).withBody(dto).expectStatus(200);
       });
     });
   });
   
   describe('Bookmarks', () => {
-    describe('Create bookmark', () => {});
-    describe('Get bookmarks', () => {});
-    describe('Get bookmar by id', () => {});
-    describe('Edit bookmark', () => {});
-    describe('Delete bookmark', () => {});
+    const dto: CreateBookmarkDto = {
+      title: 'first bookmark',
+      link: 'first-bookmark.link'
+    }
+    describe('Create bookmark', () => {
+      it('should create bookmark', () => {
+          return pactum.spec().post('/bookmarks').withHeaders({Authorization: 'Bearer $S{userAT}',}).withBody(dto).expectStatus(201).stores('bmId', 'id');
+        });
+      });
+    describe('Get bookmarks', () => {
+      it('should get bookmarks', () => {
+        return pactum.spec().get('/bookmarks').withHeaders({Authorization: 'Bearer $S{userAT}',}).expectStatus(200);
+      });
+    });
+    describe('Get bookmark by id', () => {
+      it('should get bookmark by id', () => {
+        return pactum.spec().get('/bookmarks/$S{bmId}').withHeaders({Authorization: 'Bearer $S{userAT}',}).expectStatus(200);
+      });
+    });
+    describe('Edit bookmark', () => {
+      const dto : EditBookmarkDto = {
+        title: 'first bookmark\'s new title',
+        description: 'adding a description to the first bookmark'
+      };
+      it('should edit bookmark by id', () => {
+        return pactum.spec().patch('/bookmarks/$S{bmId}').withHeaders({Authorization: 'Bearer $S{userAT}',}).withBody(dto).expectStatus(200);
+      });
+    });
+    describe('Delete bookmark', () => {
+      it('should delete bookmark by id', () => {
+        return pactum.spec().delete('/bookmarks/$S{bmId}').withHeaders({Authorization: 'Bearer $S{userAT}',}).expectStatus(200).inspect();
+      });
+    });
+    describe('Get empty bookmarks', () => {
+      it('should get empty bookmarks', () => {
+        return pactum.spec().get('/bookmarks').withHeaders({Authorization: 'Bearer $S{userAT}',}).expectStatus(200);
+      });
+    });
   });
 });
